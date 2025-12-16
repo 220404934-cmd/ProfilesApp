@@ -7,7 +7,7 @@ import {
   StyleSheet,
   ActivityIndicator,
 } from 'react-native';
-import { api } from '../api/client';
+import { api } from './api/client';
 
 export default function ProfilesListScreen({ navigation }) {
   const [profiles, setProfiles] = useState([]);

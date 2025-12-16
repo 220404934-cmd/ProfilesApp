@@ -4,8 +4,10 @@ import {
   Text,
   StyleSheet,
   ActivityIndicator,
+  ScrollView,
+  Pressable,
 } from 'react-native';
-import { api } from '../api/client';
+import { api } from './api/client';
 
 export default function ProfileDetailScreen({ route }) {
   const { id } = route.params;
@@ -14,12 +16,15 @@ export default function ProfileDetailScreen({ route }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const fetchProfileDetail = async () => {
+  const fetchProfile = async () => {
+    setLoading(true);
+    setError(null);
+
     try {
       const res = await api.get(`/profiles/${id}`);
       setProfile(res.data);
     } catch (err) {
-      setError('Profil detayı yüklenemedi.');
+      setError('Profil detayları yüklenemedi.');
       console.error(err);
     } finally {
       setLoading(false);
@@ -27,59 +32,143 @@ export default function ProfileDetailScreen({ route }) {
   };
 
   useEffect(() => {
-    fetchProfileDetail();
-  }, []);
+    fetchProfile();
+  }, [id]);
 
   if (loading) {
     return (
-      <View style={styles.center}>
+      <View style={styles.centerContainer}>
         <ActivityIndicator size="large" color="#007AFF" />
+        <Text style={styles.loadingText}>Profil yükleniyor...</Text>
       </View>
     );
   }
 
   if (error) {
     return (
-      <View style={styles.center}>
-        <Text>{error}</Text>
+      <View style={styles.centerContainer}>
+        <Text style={styles.errorText}>{error}</Text>
+        <Pressable style={styles.retryButton} onPress={fetchProfile}>
+          <Text style={styles.retryText}>Tekrar Dene</Text>
+        </Pressable>
+      </View>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <View style={styles.centerContainer}>
+        <Text style={styles.errorText}>Profil bulunamadı</Text>
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.name}>{profile.name}</Text>
-      <Text style={styles.item}>📧 {profile.email}</Text>
-      <Text style={styles.item}>📞 {profile.phone}</Text>
-      <Text style={styles.item}>🎂 Age: {profile.age}</Text>
-      <Text style={styles.bio}>{profile.bio}</Text>
-    </View>
+    <ScrollView style={styles.container}>
+      <View style={styles.card}>
+        <View style={styles.header}>
+          <Text style={styles.name}>{profile.name}</Text>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.label}>E-posta</Text>
+          <Text style={styles.value}>{profile.email}</Text>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.label}>Yaş</Text>
+          <Text style={styles.value}>{profile.age}</Text>
+        </View>
+
+        {profile.phone && (
+          <View style={styles.section}>
+            <Text style={styles.label}>Telefon</Text>
+            <Text style={styles.value}>{profile.phone}</Text>
+          </View>
+        )}
+
+        {profile.bio && (
+          <View style={styles.section}>
+            <Text style={styles.label}>Biyografi</Text>
+            <Text style={styles.bioText}>{profile.bio}</Text>
+          </View>
+        )}
+      </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
-    backgroundColor: '#fff',
+    backgroundColor: '#f5f5f5',
   },
-  center: {
+  centerContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    padding: 20,
+  },
+  card: {
+    backgroundColor: 'white',
+    margin: 16,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  header: {
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+    padding: 16,
   },
   name: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
+    color: '#333',
+  },
+  section: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  label: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#666',
+    textTransform: 'uppercase',
+    marginBottom: 4,
+  },
+  value: {
+    fontSize: 16,
+    color: '#333',
+  },
+  bioText: {
+    fontSize: 16,
+    color: '#333',
+    lineHeight: 22,
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 16,
+    color: '#666',
+  },
+  errorText: {
+    fontSize: 16,
+    color: '#d32f2f',
+    textAlign: 'center',
     marginBottom: 16,
   },
-  item: {
-    fontSize: 16,
-    marginBottom: 8,
+  retryButton: {
+    backgroundColor: '#007AFF',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
   },
-  bio: {
-    marginTop: 16,
-    fontSize: 15,
-    color: '#444',
+  retryText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
